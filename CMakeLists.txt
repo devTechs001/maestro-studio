@@ -42,6 +42,8 @@ set(MAESTRO_CORE_SOURCES
     src/audio/audio_engine.cpp
     src/audio/effects/reverb.cpp
     src/audio/effects/delay.cpp
+    src/audio/effects/eq.cpp
+    src/audio/effects/dynamics.cpp
     src/midi/midi_engine.cpp
     src/midi/midi_message.cpp
     src/midi/midi_file.cpp
@@ -59,6 +61,9 @@ set(MAESTRO_CORE_SOURCES
     src/instruments/korg/korg_pa.cpp
     src/studio/project.cpp
     src/studio/plugin_host.cpp
+    src/studio/recording.cpp
+    src/studio/automation.cpp
+    src/scripting/script_engine.cpp
 )
 
 # Build core library
