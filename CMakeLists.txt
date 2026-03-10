@@ -64,6 +64,7 @@ set(MAESTRO_CORE_SOURCES
     src/studio/recording.cpp
     src/studio/automation.cpp
     src/scripting/script_engine.cpp
+    src/ml/ml_engine.cpp
 )
 
 # Build core library
