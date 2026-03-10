@@ -1,0 +1,162 @@
+name: MaestroStudio CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  BUILD_TYPE: Release
+  QT_VERSION: '6.5.0'
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          libasound2-dev \
+          libjack-jackd2-dev \
+          libpulse-dev \
+          libgl1-mesa-dev \
+          libxkbcommon-dev \
+          libxcb-*-dev \
+          libfreetype6-dev \
+          libfontconfig1-dev
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: ${{ env.QT_VERSION }}
+        modules: 'qtmultimedia'
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DMAESTRO_BUILD_TESTS=ON \
+          -DMAESTRO_ENABLE_PLUGINS=ON
+
+    - name: Build
+      run: cmake --build build --config ${{ env.BUILD_TYPE }}
+
+    - name: Run Tests
+      working-directory: build
+      run: ctest -C ${{ env.BUILD_TYPE }} --output-on-failure
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: maestro-linux
+        path: build/MaestroStudio
+
+  build-macos:
+    runs-on: macos-13
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        brew install cmake ninja
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: ${{ env.QT_VERSION }}
+        modules: 'qtmultimedia'
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DMAESTRO_BUILD_TESTS=ON \
+          -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+
+    - name: Build
+      run: cmake --build build --config ${{ env.BUILD_TYPE }}
+
+    - name: Run Tests
+      working-directory: build
+      run: ctest -C ${{ env.BUILD_TYPE }} --output-on-failure
+
+    - name: Create DMG
+      run: |
+        cd build
+        macdeployqt MaestroStudio.app -dmg
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: maestro-macos
+        path: build/MaestroStudio.dmg
+
+  build-windows:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: ${{ env.QT_VERSION }}
+        arch: win64_msvc2019_64
+        modules: 'qtmultimedia'
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -G "Visual Studio 17 2022" -A x64 `
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+          -DMAESTRO_BUILD_TESTS=ON
+
+    - name: Build
+      run: cmake --build build --config ${{ env.BUILD_TYPE }}
+
+    - name: Run Tests
+      working-directory: build
+      run: ctest -C ${{ env.BUILD_TYPE }} --output-on-failure
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: maestro-windows
+        path: build/Release/
+
+  code-quality:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-tidy cppcheck
+
+    - name: Run clang-tidy
+      run: |
+        find src include -name '*.cpp' -o -name '*.hpp' | \
+          head -20 | \
+          xargs clang-tidy -p build --checks='-*,modernize-*,performance-*,bugprone-*' || true
+
+    - name: Run cppcheck
+      run: |
+        cppcheck --enable=all --error-exitcode=0 \
+          --suppress=missingInclude \
+          src/ include/ || true
