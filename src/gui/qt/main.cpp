@@ -69,9 +69,10 @@ int main(int argc, char *argv[]) {
         terminalWidget.startInitialization();
     });
 
-    // Wait for initialization to complete
+    // Wait for initialization to complete (with timeout)
     bool initComplete = false;
     bool initFailed = false;
+    int waitCount = 0;
 
     QObject::connect(&terminalWidget, &TerminalWidget::initializationComplete,
         [&initComplete]() { initComplete = true; });
@@ -79,16 +80,22 @@ int main(int argc, char *argv[]) {
     QObject::connect(&terminalWidget, &TerminalWidget::initializationFailed,
         [&initFailed]() { initFailed = true; });
 
-    // Process events until initialization completes
-    while (!initComplete && !initFailed) {
+    // Process events until initialization completes (max 30 seconds)
+    while (!initComplete && !initFailed && waitCount < 600) {
         app.processEvents();
         QThread::msleep(50);
+        waitCount++;
     }
 
     terminalWidget.close();
 
     if (initFailed) {
         qCritical() << "Initialization failed!";
+        return -1;
+    }
+
+    if (!initComplete) {
+        qCritical() << "Initialization timeout!";
         return -1;
     }
 
