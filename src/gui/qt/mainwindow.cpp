@@ -145,11 +145,8 @@ void MainWindow::setupMenus() {
     auto* helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(tr("&About MaestroStudio"));
 
-    // Add dock widget toggles to View menu
-    viewMenu->addAction(mixerDock_->toggleViewAction());
-    viewMenu->addAction(padsDock_->toggleViewAction());
-    viewMenu->addAction(styleDock_->toggleViewAction());
-    viewMenu->addAction(voicesDock_->toggleViewAction());
+    // View menu created (dock toggles added in setupDockWidgets)
+    menuBar()->addMenu(tr("&View"));
 }
 
 void MainWindow::setupToolbars() {
@@ -210,6 +207,18 @@ void MainWindow::setupDockWidgets() {
     // Tab some docks together
     tabifyDockWidget(padsDock_, styleDock_);
     tabifyDockWidget(voicesDock_, registrationDock_);
+
+    // Add dock widget toggles to View menu (after docks are created)
+    auto* viewMenu = menuBar()->findChild<QMenu*>("View");
+    if (!viewMenu) {
+        viewMenu = menuBar()->addMenu(tr("&View"));
+    }
+    viewMenu->addAction(mixerDock_->toggleViewAction());
+    viewMenu->addAction(padsDock_->toggleViewAction());
+    viewMenu->addAction(styleDock_->toggleViewAction());
+    viewMenu->addAction(voicesDock_->toggleViewAction());
+    viewMenu->addAction(registrationDock_->toggleViewAction());
+    viewMenu->addAction(midiMonitorDock_->toggleViewAction());
 }
 
 void MainWindow::setupConnections() {
