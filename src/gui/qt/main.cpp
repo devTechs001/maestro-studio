@@ -25,6 +25,11 @@ using namespace maestro;
 using namespace maestro::gui;
 
 int main(int argc, char *argv[]) {
+    // Set environment for headless systems
+    if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+    }
+
     // Set high DPI attributes
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -100,6 +105,11 @@ int main(int argc, char *argv[]) {
 
     auto& engine = MaestroEngine::instance();
     auto initResult = engine.initialize(engineConfig);
+    
+    if (!initResult.isSuccess()) {
+        qWarning() << "Audio engine initialization warning:" << QString::fromStdString(initResult.error());
+        // Continue anyway - audio will be unavailable
+    }
 
     splash.setProgress(30, 100);
     app.processEvents();
@@ -107,7 +117,11 @@ int main(int argc, char *argv[]) {
     splash.showMessage("Starting audio engine...");
     app.processEvents();
 
-    engine.start();
+    auto startResult = engine.start();
+    if (!startResult.isSuccess()) {
+        qWarning() << "Audio engine start warning:" << QString::fromStdString(startResult.error());
+        // Continue anyway - audio will be unavailable
+    }
 
     splash.setProgress(60, 100);
     app.processEvents();
