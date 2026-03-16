@@ -79,20 +79,41 @@ struct MusicalPosition {
 template<typename T>
 class Result {
 public:
-    Result(T value) : data_(std::move(value)), success_(true) {}
-    Result(std::string error) : error_(std::move(error)), success_(false) {}
+    Result(T value) : value_(std::move(value)), success_(true) {}
+    Result(const char* error) : error_(error), success_(false) {}
+    Result(const std::string& error) : error_(error), success_(false) {}
 
     bool isSuccess() const { return success_; }
     bool isError() const { return !success_; }
 
-    const T& value() const { return std::get<T>(data_); }
-    T& value() { return std::get<T>(data_); }
+    const T& value() const { return value_; }
+    T& value() { return value_; }
     const std::string& error() const { return error_; }
 
     operator bool() const { return success_; }
 
 private:
-    std::variant<T, std::monostate> data_;
+    T value_;
+    std::string error_;
+    bool success_;
+};
+
+// Specialization for Result<void>
+template<>
+class Result<void> {
+public:
+    Result() : success_(true) {}
+    Result(const char* error) : error_(error), success_(false) {}
+    Result(const std::string& error) : error_(error), success_(false) {}
+
+    bool isSuccess() const { return success_; }
+    bool isError() const { return !success_; }
+
+    const std::string& error() const { return error_; }
+
+    operator bool() const { return success_; }
+
+private:
     std::string error_;
     bool success_;
 };

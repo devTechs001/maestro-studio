@@ -1,6 +1,7 @@
 // include/maestro/core/settings.hpp
 #pragma once
 
+#include "maestro/core/config.hpp"
 #include "maestro/core/types.hpp"
 #include <string>
 #include <vector>
@@ -232,7 +233,7 @@ public:
     // Callbacks
     using SettingsChangedCallback = std::function<void(const std::string& key)>;
     void addChangedCallback(SettingsChangedCallback callback);
-    void removeChangedCallback(SettingsChangedCallback callback);
+    void removeChangedCallback(const SettingsChangedCallback& callback);
 
 private:
     SettingsManager();

@@ -5,9 +5,16 @@
 #include <cmath>
 #include <algorithm>
 #include <array>
+#include <complex>
+#include <memory>
+#include <random>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
+#endif
+
+#ifndef TWO_PI
+#define TWO_PI (2.0 * M_PI)
 #endif
 
 namespace maestro::dsp {
@@ -282,5 +289,146 @@ inline float fold(float value, float min, float max) {
     if (result > range) result = 2.0f * range - result;
     return result + min;
 }
+
+/**
+ * @brief Biquad filter for various filter types
+ */
+class BiquadFilter {
+public:
+    enum class Type {
+        LowPass,
+        HighPass,
+        BandPass,
+        Notch,
+        Peak,
+        LowShelf,
+        HighShelf,
+        AllPass
+    };
+
+    void setCoefficients(Type type, float frequency, float q, float gain, float sampleRate);
+    float process(float input);
+    void reset();
+
+    struct Coefficients {
+        float b0, b1, b2, a1, a2;
+    };
+    Coefficients getCoefficients() const { return {b0_, b1_, b2_, a1_, a2_}; }
+
+private:
+    float b0_ = 1.0f, b1_ = 0.0f, b2_ = 0.0f;
+    float a1_ = 0.0f, a2_ = 0.0f;
+    float z1_ = 0.0f, z2_ = 0.0f;
+};
+
+/**
+ * @brief Envelope follower for dynamics processing
+ */
+class EnvelopeFollower {
+public:
+    void setAttackTime(float ms, float sampleRate);
+    void setReleaseTime(float ms, float sampleRate);
+    float process(float input);
+    void reset();
+
+private:
+    float attackCoeff_ = 0.9f;
+    float releaseCoeff_ = 0.999f;
+    float envelope_ = 0.0f;
+};
+
+/**
+ * @brief Low Frequency Oscillator
+ */
+class LFO {
+public:
+    enum class Waveform {
+        Sine,
+        Triangle,
+        Square,
+        Sawtooth,
+        Random
+    };
+
+    void setFrequency(float hz, float sampleRate);
+    void setWaveform(Waveform waveform) { waveform_ = waveform; }
+    void setPhase(float phase) { phase_ = phase; }
+    float process();
+    void reset();
+
+private:
+    Waveform waveform_ = Waveform::Sine;
+    float phase_ = 0.0f;
+    float phaseIncrement_ = 0.0f;
+    float randomValue_ = 0.0f;
+    float randomTarget_ = 0.0f;
+};
+
+/**
+ * @brief Circular buffer for delay lines
+ */
+template<typename T, size_t MaxSize>
+class CircularBuffer {
+public:
+    void clear() {
+        buffer_.fill(T{});
+        writeIndex_ = 0;
+    }
+
+    void write(T value) {
+        buffer_[writeIndex_] = value;
+        writeIndex_ = (writeIndex_ + 1) % MaxSize;
+    }
+
+    T read(size_t delayInSamples) const {
+        size_t readIndex = (writeIndex_ - delayInSamples + MaxSize) % MaxSize;
+        return buffer_[readIndex];
+    }
+
+    T readInterpolated(float delayInSamples) const {
+        size_t intDelay = static_cast<size_t>(delayInSamples);
+        float frac = delayInSamples - intDelay;
+        T sample1 = read(intDelay);
+        T sample2 = read(intDelay + 1);
+        return lerp(sample1, sample2, frac);
+    }
+
+    size_t size() const { return MaxSize; }
+
+private:
+    std::array<T, MaxSize> buffer_{};
+    size_t writeIndex_ = 0;
+};
+
+/**
+ * @brief FFT processor for spectral analysis
+ */
+class FFTProcessor {
+public:
+    enum class Window {
+        Rectangular,
+        Hann,
+        Hamming,
+        Blackman,
+        FlatTop
+    };
+
+    explicit FFTProcessor(size_t fftSize = 2048);
+    ~FFTProcessor();
+
+    void process(const float* input, std::complex<float>* output);
+    void processInverse(const std::complex<float>* input, float* output);
+
+    size_t getSize() const { return fftSize_; }
+
+    void setWindow(Window window);
+    void applyWindow(float* data);
+
+private:
+    size_t fftSize_;
+    Window windowType_ = Window::Hann;
+    class Impl;
+    std::unique_ptr<Impl> impl_;
+};
 
 } // namespace maestro::dsp

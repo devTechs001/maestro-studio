@@ -1,6 +1,7 @@
 // include/maestro/sync/sync_engine.hpp
 #pragma once
 
+#include "maestro/core/config.hpp"
 #include "maestro/core/types.hpp"
 #include <memory>
 #include <functional>

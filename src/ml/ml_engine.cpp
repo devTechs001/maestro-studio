@@ -1,5 +1,6 @@
 // src/ml/ml_engine.cpp
 #include "maestro/ml/ml_engine.hpp"
+#include <cstring>
 #include <random>
 #include <numeric>
 #include <cmath>
@@ -95,11 +96,11 @@ std::vector<uint8_t> Tensor::serialize() const {
     int64_t numDims = shape_.size();
     data.insert(data.end(), reinterpret_cast<uint8_t*>(&numDims),
                 reinterpret_cast<uint8_t*>(&numDims + 1));
-    data.insert(data.end(), reinterpret_cast<uint8_t*>(shape_.data()),
-                reinterpret_cast<uint8_t*>(shape_.data() + numDims));
+    data.insert(data.end(), reinterpret_cast<const uint8_t*>(shape_.data()),
+                reinterpret_cast<const uint8_t*>(shape_.data() + numDims));
     // Serialize data
-    data.insert(data.end(), reinterpret_cast<uint8_t*>(data_.data()),
-                reinterpret_cast<uint8_t*>(data_.data() + data_.size()));
+    data.insert(data.end(), reinterpret_cast<const uint8_t*>(data_.data()),
+                reinterpret_cast<const uint8_t*>(data_.data() + data_.size()));
     return data;
 }
 

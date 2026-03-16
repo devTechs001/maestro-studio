@@ -37,7 +37,7 @@ int WelcomePage::nextId() const {
 }
 
 void WelcomePage::initializePage() {
-    field("welcomeCompleted").setBool(true);
+    field("welcomeCompleted").setValue(true);
 }
 
 // AudioSetupPage implementation
@@ -408,38 +408,38 @@ OnboardingWizard::OnboardingWizard(QWidget* parent)
 }
 
 QString OnboardingWizard::audioDriver() const {
-    auto* page = qobject_cast<AudioSetupPage*>(page(1));
-    return page ? page->selectedDriver() : QString();
+    auto* audioPage = qobject_cast<AudioSetupPage*>(page(1));
+    return audioPage ? audioPage->selectedDriver() : QString();
 }
 
 int OnboardingWizard::sampleRate() const {
-    auto* page = qobject_cast<AudioSetupPage*>(page(1));
-    return page ? page->selectedSampleRate() : 48000;
+    auto* audioPage = qobject_cast<AudioSetupPage*>(page(1));
+    return audioPage ? audioPage->selectedSampleRate() : 48000;
 }
 
 int OnboardingWizard::bufferSize() const {
-    auto* page = qobject_cast<AudioSetupPage*>(page(1));
-    return page ? page->selectedBufferSize() : 256;
+    auto* audioPage = qobject_cast<AudioSetupPage*>(page(1));
+    return audioPage ? audioPage->selectedBufferSize() : 256;
 }
 
 QStringList OnboardingWizard::midiInputs() const {
-    auto* page = qobject_cast<MidiSetupPage*>(page(2));
-    return page ? page->selectedInputs() : QStringList();
+    auto* midiPage = qobject_cast<MidiSetupPage*>(page(2));
+    return midiPage ? midiPage->selectedInputs() : QStringList();
 }
 
 QStringList OnboardingWizard::midiOutputs() const {
-    auto* page = qobject_cast<MidiSetupPage*>(page(2));
-    return page ? page->selectedOutputs() : QStringList();
+    auto* midiPage = qobject_cast<MidiSetupPage*>(page(2));
+    return midiPage ? midiPage->selectedOutputs() : QStringList();
 }
 
 QString OnboardingWizard::instrument() const {
-    auto* page = qobject_cast<InstrumentSetupPage*>(page(3));
-    return page ? page->selectedInstrument() : QString();
+    auto* instrumentPage = qobject_cast<InstrumentSetupPage*>(page(3));
+    return instrumentPage ? instrumentPage->selectedInstrument() : QString();
 }
 
 bool OnboardingWizard::autoSave() const {
-    auto* page = qobject_cast<PreferencesPage*>(page(4));
-    return page ? page->autoSaveEnabled() : true;
+    auto* preferencesPage = qobject_cast<PreferencesPage*>(page(4));
+    return preferencesPage ? preferencesPage->autoSaveEnabled() : true;
 }
 
 void OnboardingWizard::accept() {

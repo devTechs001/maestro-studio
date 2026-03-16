@@ -28,12 +28,16 @@
     #define MAESTRO_PLATFORM_LINUX
     #define MAESTRO_EXPORT __attribute__((visibility("default")))
     #define MAESTRO_IMPORT
+#else
+    #define MAESTRO_EXPORT
+    #define MAESTRO_IMPORT
 #endif
 
-#ifdef MAESTRO_BUILD_SHARED
+// MAESTRO_API definition
+#if defined(MAESTRO_BUILD_SHARED) || defined(MAESTRO_EXPORT_API)
     #define MAESTRO_API MAESTRO_EXPORT
 #else
-    #define MAESTRO_API MAESTRO_IMPORT
+    #define MAESTRO_API
 #endif
 
 // Audio configuration

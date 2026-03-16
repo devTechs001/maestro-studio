@@ -135,8 +135,10 @@ Result<void> Project::save(const std::string& path) {
         file.write(reinterpret_cast<char*>(&trackType), 1);
 
         // Write track settings
-        file.write(reinterpret_cast<const char*>(&track->volume()), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&track->pan()), sizeof(float));
+        float volume = track->volume();
+        float pan = track->pan();
+        file.write(reinterpret_cast<const char*>(&volume), sizeof(float));
+        file.write(reinterpret_cast<const char*>(&pan), sizeof(float));
 
         uint8_t trackFlags = 0;
         if (track->isMuted()) trackFlags |= 0x01;

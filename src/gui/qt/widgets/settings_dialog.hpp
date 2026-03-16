@@ -5,6 +5,14 @@
 #include <QTreeWidget>
 #include <QStackedWidget>
 #include <QSettings>
+#include <QSpinBox>
+#include <QDoubleSpinBox>
+#include <QComboBox>
+#include <QCheckBox>
+#include <QLabel>
+#include <QListWidget>
+#include <QPushButton>
+#include "maestro/core/settings.hpp"
 
 namespace maestro::gui {
 
@@ -56,7 +64,7 @@ signals:
 private:
     void setupUI();
     void updateDeviceList();
-    
+
     QComboBox* driverCombo_;
     QComboBox* inputDeviceCombo_;
     QComboBox* outputDeviceCombo_;
@@ -67,6 +75,7 @@ private:
     QCheckBox* inputMonitorCheck_;
     QDoubleSpinBox* inputGainSpin_;
     QCheckBox* ditherCheck_;
+    QPushButton* updateDeviceBtn_;
 };
 
 class MidiSettingsPage : public SettingsPage {

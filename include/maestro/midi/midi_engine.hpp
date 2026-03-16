@@ -1,12 +1,15 @@
 // include/maestro/midi/midi_engine.hpp
 #pragma once
 
+#include "maestro/core/config.hpp"
 #include "maestro/core/types.hpp"
 #include "maestro/midi/midi_types.hpp"
 #include <memory>
 #include <functional>
 #include <vector>
 #include <mutex>
+#include <atomic>
+#include <thread>
 
 namespace maestro {
 
@@ -44,8 +47,8 @@ public:
     Result<void> closeOutput(const std::string& portId);
 
     // Virtual ports
-    Result<std::string> createVirtualInput(const std::string& name);
-    Result<std::string> createVirtualOutput(const std::string& name);
+    Result<void> createVirtualInput(const std::string& name);
+    Result<void> createVirtualOutput(const std::string& name);
 
     // Sending MIDI
     Result<void> send(const midi::MidiMessage& msg,

@@ -1,7 +1,9 @@
 // include/maestro/studio/recording.hpp
 #pragma once
 
+#include "maestro/core/config.hpp"
 #include "maestro/core/types.hpp"
+#include "maestro/midi/midi_types.hpp"
 #include "maestro/audio/audio_engine.hpp"
 #include <memory>
 #include <functional>
@@ -203,7 +205,7 @@ public:
     };
 
     static Result<ImportResult> importFile(const std::string& path,
-                                            const ImportOptions& options = {});
+                                            const ImportOptions& options);
 
     // Export
     struct ExportOptions {

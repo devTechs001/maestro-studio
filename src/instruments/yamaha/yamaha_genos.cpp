@@ -80,9 +80,12 @@ std::vector<Style> YamahaGenos::getStyles() const {
 }
 
 Result<void> YamahaGenos::loadStyle(const std::string& path) {
-    return YamahaSFFParser::parse(path).map([this](const Style& style) {
-        impl_->styles.push_back(style);
-    });
+    auto result = YamahaSFFParser::parse(path);
+    if (result.isSuccess()) {
+        impl_->styles.push_back(result.value());
+        return Result<void>();
+    }
+    return Result<void>(result.error());
 }
 
 Result<void> YamahaGenos::setStyle(const Style& style) {

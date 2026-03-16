@@ -76,7 +76,7 @@ Result<void> MidiEngine::initialize() {
         }
 
         return Result<void>();
-    } catch (const RtMidiError& e) {
+    } catch (const std::exception& e) {
         return Result<void>(std::string("RtMidi error: ") + e.what());
     }
 }
@@ -86,18 +86,18 @@ Result<void> MidiEngine::start() {
         impl_->midiIn->setCallback(&Impl::midiCallback, this);
         impl_->midiIn->ignoreTypes(false, false, false);
         return Result<void>();
-    } catch (const RtMidiError& e) {
+    } catch (const std::exception& e) {
         return Result<void>(std::string("Failed to start MIDI: ") + e.what());
     }
 }
 
 Result<void> MidiEngine::stop() {
     try {
-        if (impl_->midiIn->isCallbackActive()) {
+        if (impl_->midiIn->isPortOpen()) {
             impl_->midiIn->cancelCallback();
         }
         return Result<void>();
-    } catch (const RtMidiError& e) {
+    } catch (const std::exception& e) {
         return Result<void>(std::string("Failed to stop MIDI: ") + e.what());
     }
 }
@@ -136,7 +136,7 @@ Result<void> MidiEngine::closeInput(const std::string& /*portId*/) {
             impl_->midiIn->closePort();
         }
         return Result<void>();
-    } catch (const RtMidiError& e) {
+    } catch (const std::exception& e) {
         return Result<void>(std::string("Failed to close input: ") + e.what());
     }
 }
@@ -147,26 +147,26 @@ Result<void> MidiEngine::closeOutput(const std::string& /*portId*/) {
             impl_->midiOut->closePort();
         }
         return Result<void>();
-    } catch (const RtMidiError& e) {
+    } catch (const std::exception& e) {
         return Result<void>(std::string("Failed to close output: ") + e.what());
     }
 }
 
-Result<std::string> MidiEngine::createVirtualInput(const std::string& name) {
+Result<void> MidiEngine::createVirtualInput(const std::string& name) {
     try {
         impl_->midiIn->openVirtualPort(name);
-        return Result<std::string>(name);
-    } catch (const RtMidiError& e) {
-        return Result<std::string>(std::string("Failed to create virtual input: ") + e.what());
+        return Result<void>();
+    } catch (const std::exception& e) {
+        return Result<void>(std::string("Failed to create virtual input: ") + e.what());
     }
 }
 
-Result<std::string> MidiEngine::createVirtualOutput(const std::string& name) {
+Result<void> MidiEngine::createVirtualOutput(const std::string& name) {
     try {
         impl_->midiOut->openVirtualPort(name);
-        return Result<std::string>(name);
-    } catch (const RtMidiError& e) {
-        return Result<std::string>(std::string("Failed to create virtual output: ") + e.what());
+        return Result<void>();
+    } catch (const std::exception& e) {
+        return Result<void>(std::string("Failed to create virtual output: ") + e.what());
     }
 }
 
@@ -175,7 +175,7 @@ Result<void> MidiEngine::send(const midi::MidiMessage& msg, const std::string& /
         std::vector<unsigned char> midiMsg(msg.data.begin(), msg.data.begin() + msg.length);
         impl_->midiOut->sendMessage(&midiMsg);
         return Result<void>();
-    } catch (const RtMidiError& e) {
+    } catch (const std::exception& e) {
         return Result<void>(std::string("Failed to send MIDI: ") + e.what());
     }
 }
@@ -188,7 +188,7 @@ Result<void> MidiEngine::sendSysEx(const midi::SysExMessage& msg, const std::str
     try {
         impl_->midiOut->sendMessage(&msg.data);
         return Result<void>();
-    } catch (const RtMidiError& e) {
+    } catch (const std::exception& e) {
         return Result<void>(std::string("Failed to send SysEx: ") + e.what());
     }
 }

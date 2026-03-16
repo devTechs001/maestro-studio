@@ -818,15 +818,15 @@ void ShortcutSettingsPage::populateShortcuts() {
     for (const auto& s : shortcuts) {
         if (categories.find(s.category) == categories.end()) {
             auto* catItem = new QTreeWidgetItem(shortcutTree_);
-            catItem->setText(0, s.category);
+            catItem->setText(0, QString::fromStdString(s.category));
             catItem->setExpanded(true);
             categories[s.category] = catItem;
         }
         
         auto* item = new QTreeWidgetItem(categories[s.category]);
-        item->setText(0, s.action);
-        item->setText(1, s.shortcut);
-        item->setText(2, s.category);
+        item->setText(0, QString::fromStdString(s.action));
+        item->setText(1, QString::fromStdString(s.shortcut));
+        item->setText(2, QString::fromStdString(s.category));
     }
 }
 
@@ -1100,7 +1100,7 @@ void SettingsDialog::setupUI() {
 
 void SettingsDialog::onCategoryChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous) {
     if (current) {
-        stackedWidget_->setCurrentIndex(current->row());
+        stackedWidget_->setCurrentIndex(categoryTree_->indexOfTopLevelItem(current));
     }
 }
 

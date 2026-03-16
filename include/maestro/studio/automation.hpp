@@ -1,6 +1,7 @@
 // include/maestro/studio/automation.hpp
 #pragma once
 
+#include "maestro/core/config.hpp"
 #include "maestro/core/types.hpp"
 #include <vector>
 #include <memory>

@@ -17,8 +17,10 @@ find_package(PkgConfig REQUIRED)
 
 # Find dependencies
 find_package(Qt6 COMPONENTS Widgets Core Gui Multimedia REQUIRED)
-find_package(RtAudio REQUIRED)
-find_package(RtMidi REQUIRED)
+
+# Use pkg-config for RtAudio and RtMidi
+pkg_check_modules(RTAUDIO REQUIRED rtaudio)
+pkg_check_modules(RTMIDI REQUIRED rtmidi)
 
 # Optional dependencies
 if(MAESTRO_ENABLE_PLUGINS)
@@ -40,16 +42,17 @@ set(MAESTRO_CORE_SOURCES
     src/core/engine.cpp
     src/core/settings.cpp
     src/audio/audio_engine.cpp
+    src/audio/dsp/dsp_common.cpp
     src/audio/effects/reverb.cpp
     src/audio/effects/delay.cpp
     src/audio/effects/eq.cpp
     src/audio/effects/dynamics.cpp
+    src/audio/effects/modulation.cpp
     src/midi/midi_engine.cpp
     src/midi/midi_message.cpp
     src/midi/midi_file.cpp
     src/midi/midi_sequencer.cpp
     src/style/style_engine.cpp
-    src/style/style_parser.cpp
     src/voice/voice_engine.cpp
     src/pad/pad_engine.cpp
     src/sync/sync_engine.cpp
@@ -63,14 +66,13 @@ set(MAESTRO_CORE_SOURCES
     src/studio/plugin_host.cpp
     src/studio/recording.cpp
     src/studio/automation.cpp
-    src/scripting/script_engine.cpp
     src/ml/ml_engine.cpp
 )
 
 # Build core library
 if(MAESTRO_BUILD_SHARED)
     add_library(maestro_core SHARED ${MAESTRO_CORE_SOURCES})
-    target_compile_definitions(maestro_core PRIVATE MAESTRO_BUILD_SHARED)
+    target_compile_definitions(maestro_core PRIVATE MAESTRO_BUILD_SHARED MAESTRO_EXPORT_API)
 else()
     add_library(maestro_core STATIC ${MAESTRO_CORE_SOURCES})
 endif()
@@ -78,11 +80,13 @@ endif()
 target_include_directories(maestro_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    ${RTAUDIO_INCLUDE_DIRS}
+    ${RTMIDI_INCLUDE_DIRS}
 )
 
 target_link_libraries(maestro_core PUBLIC
-    RtAudio::RtAudio
-    RtMidi::RtMidi
+    ${RTAUDIO_LIBRARIES}
+    ${RTMIDI_LIBRARIES}
     Qt6::Core
 )
 
@@ -101,10 +105,17 @@ set(MAESTRO_GUI_SOURCES
     src/gui/qt/widgets/splash_screen.cpp
     src/gui/qt/widgets/onboarding_wizard.cpp
     src/gui/qt/widgets/settings_dialog.cpp
+    src/gui/qt/widgets/terminal_widget.cpp
 )
 
 qt_add_executable(MaestroStudio
     ${MAESTRO_GUI_SOURCES}
+)
+
+set_target_properties(MaestroStudio PROPERTIES
+    AUTOMOC ON
+    AUTOUIC ON
+    AUTORCC ON
 )
 
 target_link_libraries(MaestroStudio PRIVATE

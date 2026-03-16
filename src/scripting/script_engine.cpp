@@ -1,5 +1,6 @@
 // src/scripting/script_engine.cpp
 #include "maestro/scripting/script_engine.hpp"
+#include "maestro/midi/midi_types.hpp"
 #include <iostream>
 
 namespace maestro::scripting {

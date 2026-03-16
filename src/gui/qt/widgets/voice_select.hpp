@@ -5,6 +5,7 @@
 #include <QListWidget>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QSpinBox>
 
 namespace maestro::gui {
 

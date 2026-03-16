@@ -1,6 +1,7 @@
 // include/maestro/instruments/instrument.hpp
 #pragma once
 
+#include "maestro/core/config.hpp"
 #include "maestro/core/types.hpp"
 #include "maestro/midi/midi_types.hpp"
 #include <string>

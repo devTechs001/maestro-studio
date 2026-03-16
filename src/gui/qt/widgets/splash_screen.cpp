@@ -4,11 +4,13 @@
 #include <QVBoxLayout>
 #include <QApplication>
 #include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
+#include <QEasingCurve>
 
 namespace maestro::gui {
 
 SplashScreen::SplashScreen(QWidget* parent)
-    : QSplashScreen(parent, QPixmap(800, 600))
+    : QSplashScreen(QPixmap(800, 600), parent ? Qt::Window : Qt::SplashScreen)
 {
     setFixedSize(800, 600);
     

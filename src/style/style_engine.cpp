@@ -138,7 +138,7 @@ std::string ChordInfo::toString() const {
     }
 
     if (hasBass && bass != root) {
-        name += "/" + noteNames[bass % 12];
+        name += std::string("/") + noteNames[bass % 12];
     }
 
     return name;

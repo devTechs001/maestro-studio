@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QComboBox>
+#include <algorithm>
 
 namespace maestro::gui {
 
@@ -153,6 +154,24 @@ void StyleControlWidget::updateVariationButtons() {
     for (size_t i = 0; i < variationButtons_.size(); ++i) {
         variationButtons_[i]->setChecked(static_cast<int>(i) == currentVariation_);
     }
+}
+
+void StyleControlWidget::onVariationButtonClicked() {
+    // Handle variation button click
+    auto* button = qobject_cast<QPushButton*>(sender());
+    if (button) {
+        auto it = std::find(variationButtons_.begin(), variationButtons_.end(), button);
+        if (it != variationButtons_.end()) {
+            int index = static_cast<int>(it - variationButtons_.begin());
+            currentVariation_ = index;
+            emit variationChanged(index);
+        }
+    }
+}
+
+void StyleControlWidget::onTempoChanged(int value) {
+    tempo_ = value;
+    emit tempoChanged(value);
 }
 
 } // namespace maestro::gui

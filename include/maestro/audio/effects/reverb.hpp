@@ -53,16 +53,19 @@ private:
 
     std::vector<std::unique_ptr<CombFilter>> combFilters_;
     std::vector<std::unique_ptr<AllPassFilter>> allPassFilters_;
-    
+
+    std::vector<int> combTuning_;
+    std::vector<int> allPassTuning_;
+
     float roomSize_ = 0.5f;
     float damping_ = 0.5f;
     float wet_ = 0.3f;
     float dry_ = 0.7f;
     float width_ = 1.0f;
     bool freeze_ = false;
-    
+
     SampleRate sampleRate_ = 44100.0f;
-    
+
     // Stereo buffers
     std::vector<float> leftBuffer_;
     std::vector<float> rightBuffer_;

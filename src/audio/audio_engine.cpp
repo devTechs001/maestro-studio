@@ -3,6 +3,7 @@
 #include <RtAudio.h>
 #include <chrono>
 #include <cstring>
+#include <iostream>
 
 namespace maestro {
 
@@ -13,6 +14,14 @@ public:
     std::vector<std::vector<float>> processingBuffers;
     std::chrono::high_resolution_clock::time_point lastProcessTime;
     double cpuUsage = 0.0;
+    RtAudioErrorType lastError = RTAUDIO_NO_ERROR;
+    std::string lastErrorText;
+
+    void errorCallback(RtAudioErrorType type, const std::string& errorText) {
+        lastError = type;
+        lastErrorText = errorText;
+        std::cerr << "RtAudio Error [" << type << "]: " << errorText << std::endl;
+    }
 
     static int audioCallback(void* outputBuffer, void* inputBuffer,
                             unsigned int nFrames,
@@ -73,17 +82,16 @@ AudioEngine::~AudioEngine() {
 Result<void> AudioEngine::initialize(const Config& config) {
     config_ = config;
 
-    try {
-        impl_->rtAudio = std::make_unique<RtAudio>();
+    impl_->rtAudio = std::make_unique<RtAudio>(RtAudio::UNSPECIFIED,
+        [this](RtAudioErrorType type, const std::string& errorText) {
+            impl_->errorCallback(type, errorText);
+        });
 
-        if (impl_->rtAudio->getDeviceCount() == 0) {
-            return Result<void>("No audio devices found");
-        }
-
-        return Result<void>();
-    } catch (const RtAudioError& e) {
-        return Result<void>(std::string("RtAudio error: ") + e.what());
+    if (impl_->rtAudio->getDeviceCount() == 0) {
+        return Result<void>("No audio devices found");
     }
+
+    return Result<void>();
 }
 
 Result<void> AudioEngine::start() {
@@ -91,34 +99,37 @@ Result<void> AudioEngine::start() {
         return Result<void>("Audio engine already running");
     }
 
-    try {
-        RtAudio::StreamParameters outputParams;
-        outputParams.deviceId = impl_->rtAudio->getDefaultOutputDevice();
-        outputParams.nChannels = config_.outputChannels;
+    RtAudio::StreamParameters outputParams;
+    outputParams.deviceId = impl_->rtAudio->getDefaultOutputDevice();
+    outputParams.nChannels = config_.outputChannels;
 
-        RtAudio::StreamParameters inputParams;
-        inputParams.deviceId = impl_->rtAudio->getDefaultInputDevice();
-        inputParams.nChannels = config_.inputChannels;
+    RtAudio::StreamParameters inputParams;
+    inputParams.deviceId = impl_->rtAudio->getDefaultInputDevice();
+    inputParams.nChannels = config_.inputChannels;
 
-        unsigned int bufferFrames = config_.bufferSize;
+    unsigned int bufferFrames = config_.bufferSize;
 
-        impl_->rtAudio->openStream(
-            &outputParams,
-            config_.inputChannels > 0 ? &inputParams : nullptr,
-            RTAUDIO_FLOAT32,
-            config_.sampleRate,
-            &bufferFrames,
-            &Impl::audioCallback,
-            this
-        );
+    RtAudioErrorType err = impl_->rtAudio->openStream(
+        &outputParams,
+        config_.inputChannels > 0 ? &inputParams : nullptr,
+        RTAUDIO_FLOAT32,
+        config_.sampleRate,
+        &bufferFrames,
+        &Impl::audioCallback,
+        this
+    );
 
-        impl_->rtAudio->startStream();
-        running_ = true;
-
-        return Result<void>();
-    } catch (const RtAudioError& e) {
-        return Result<void>(std::string("Failed to start audio: ") + e.what());
+    if (err != RTAUDIO_NO_ERROR) {
+        return Result<void>("Failed to open audio stream: " + impl_->lastErrorText);
     }
+
+    err = impl_->rtAudio->startStream();
+    if (err != RTAUDIO_NO_ERROR) {
+        return Result<void>("Failed to start audio: " + impl_->lastErrorText);
+    }
+
+    running_ = true;
+    return Result<void>();
 }
 
 Result<void> AudioEngine::stop() {
@@ -126,18 +137,14 @@ Result<void> AudioEngine::stop() {
         return Result<void>();
     }
 
-    try {
-        if (impl_->rtAudio->isStreamRunning()) {
-            impl_->rtAudio->stopStream();
-        }
-        if (impl_->rtAudio->isStreamOpen()) {
-            impl_->rtAudio->closeStream();
-        }
-        running_ = false;
-        return Result<void>();
-    } catch (const RtAudioError& e) {
-        return Result<void>(std::string("Failed to stop audio: ") + e.what());
+    if (impl_->rtAudio->isStreamRunning()) {
+        impl_->rtAudio->stopStream();
     }
+    if (impl_->rtAudio->isStreamOpen()) {
+        impl_->rtAudio->closeStream();
+    }
+    running_ = false;
+    return Result<void>();
 }
 
 std::vector<AudioDevice> AudioEngine::getAvailableDevices() const {

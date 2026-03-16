@@ -1,6 +1,7 @@
 // include/maestro/ml/ml_engine.hpp
 #pragma once
 
+#include "maestro/core/config.hpp"
 #include "maestro/core/types.hpp"
 #include "maestro/midi/midi_types.hpp"
 #include <memory>
