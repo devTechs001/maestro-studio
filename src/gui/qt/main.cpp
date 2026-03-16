@@ -69,6 +69,111 @@ int main(int argc, char *argv[]) {
         terminalWidget.startInitialization();
     });
 
-    // Keep terminal widget visible - don't proceed further
+    // Wait for initialization to complete (with timeout)
+    bool initComplete = false;
+    bool initFailed = false;
+    int waitCount = 0;
+
+    QObject::connect(&terminalWidget, &TerminalWidget::initializationComplete,
+        [&initComplete]() { initComplete = true; });
+    
+    QObject::connect(&terminalWidget, &TerminalWidget::initializationFailed,
+        [&initFailed]() { initFailed = true; });
+
+    // Process events until initialization completes (max 30 seconds)
+    while (!initComplete && !initFailed && waitCount < 600) {
+        app.processEvents();
+        QThread::msleep(50);
+        waitCount++;
+    }
+
+    terminalWidget.close();
+
+    if (initFailed) {
+        qCritical() << "Initialization failed!";
+        return -1;
+    }
+
+    if (!initComplete) {
+        qCritical() << "Initialization timeout!";
+        return -1;
+    }
+
+    // Show splash screen
+    SplashScreen splash;
+    splash.showMessage("Finalizing system...");
+    splash.show();
+    app.processEvents();
+
+    // Initialize audio engine
+    MaestroEngine::Config engineConfig;
+    engineConfig.sampleRate = SettingsManager::instance().audio().sampleRate;
+    engineConfig.bufferSize = SettingsManager::instance().audio().bufferSize;
+
+    auto& engine = MaestroEngine::instance();
+    auto initResult = engine.initialize(engineConfig);
+    
+    if (!initResult.isSuccess()) {
+        qWarning() << "Audio engine initialization warning:" << QString::fromStdString(initResult.error());
+        // Continue anyway - audio will be unavailable
+    }
+
+    splash.setProgress(30, 100);
+    app.processEvents();
+
+    splash.showMessage("Starting audio engine...");
+    app.processEvents();
+
+    auto startResult = engine.start();
+    if (!startResult.isSuccess()) {
+        qWarning() << "Audio engine start warning:" << QString::fromStdString(startResult.error());
+        // Continue anyway - audio will be unavailable
+    }
+
+    splash.setProgress(60, 100);
+    app.processEvents();
+
+    splash.showMessage("Loading user interface...");
+    app.processEvents();
+
+    splash.setProgress(80, 100);
+    app.processEvents();
+
+    // Check if onboarding should be shown
+    bool showOnboarding = interfaceSettings.showOnboarding;
+
+    // Create main window
+    MainWindow mainWindow;
+
+    splash.setProgress(100, 100);
+    app.processEvents();
+
+    // Finish splash with fade effect
+    QTimer::singleShot(500, [&splash, &mainWindow]() {
+        splash.finishWithFade(&mainWindow);
+    });
+
+    // Show onboarding if needed
+    if (showOnboarding) {
+        OnboardingWizard wizard(&mainWindow);
+        wizard.connect(&wizard, &OnboardingWizard::onboardingCompleted,
+            [](const QVariantMap& settings) {
+                // Apply onboarding settings
+                auto& audioSettings = SettingsManager::instance().audio();
+                audioSettings.driver = settings["audioDriver"].toString().toStdString();
+                audioSettings.sampleRate = settings["sampleRate"].toInt();
+                audioSettings.bufferSize = settings["bufferSize"].toInt();
+
+                SettingsManager::instance().save();
+            });
+
+        QTimer::singleShot(1000, [&wizard]() {
+            wizard.exec();
+        });
+    }
+
+    // Show main window
+    mainWindow.show();
+
     return app.exec();
 }
